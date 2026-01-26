@@ -10,6 +10,7 @@ import '../../../main.dart';
 import '../../common/core/enums/infinite_scroll_list.enum.dart';
 import '../../common/core/utils/color_utils.dart';
 import '../../common/core/widgets/view_model/infinite_scroll_list_view_model.dart';
+import '../../home/screens/home_screen.dart';
 import 'state/settings_state.dart';
 
 final settingsViewModelProvider =
@@ -32,7 +33,10 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
       await ref.read(userRepositoryProvider).logout();
       await clearStorage();
       await resetInfiniteLists();
-      navigatorKey.currentState?.pushReplacementNamed("/login");
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (route) => false,
+      );
     } catch (error) {
       state = state.copyWith(isLoading: false);
     }
@@ -45,7 +49,10 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
       await ref.read(userRepositoryProvider).delete();
       await clearStorage();
       await resetInfiniteLists();
-      navigatorKey.currentState?.pushReplacementNamed("/login");
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (route) => false,
+      );
     } catch (error) {
       state = state.copyWith(isLoading: false);
     }
