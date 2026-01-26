@@ -22,31 +22,46 @@ class SearchWidget extends HookConsumerWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: ColorUtils.white,
       title: TypeAheadField<User>(
-        textFieldConfiguration: TextFieldConfiguration(
-          controller: searchController,
-          decoration: InputDecoration(
-            hintText: '${AppLocalizations.of(context)!.search}...',
-            border: InputBorder.none,
-            suffixIconColor: ColorUtils.main,
-            suffixIcon: const Icon(Icons.search),
-          ),
-        ),
+        // 1. Truyền controller trực tiếp vào TypeAheadField
+        controller: searchController,
+
+        // 2. Sử dụng 'builder' thay cho 'textFieldConfiguration'
+        builder: (context, controller, focusNode) {
+          return TextField(
+            controller: controller, // Sử dụng controller từ builder (chính là searchController)
+            focusNode: focusNode,
+            decoration: InputDecoration(
+              hintText: '${AppLocalizations.of(context)!.search}...',
+              border: InputBorder.none,
+              suffixIconColor: ColorUtils.main,
+              suffixIcon: const Icon(Icons.search),
+            ),
+          );
+        },
+
         suggestionsCallback: (String query) async {
           if (query.isNotEmpty) {
             return await onSearchChanged(query);
           }
           return [];
         },
+
         itemBuilder: (BuildContext context, User suggestion) {
           return ListTile(
-              title: Text(
-            UserUtils.getNameOrUsername(suggestion),
-          ));
+            title: Text(
+              UserUtils.getNameOrUsername(suggestion),
+            ),
+          );
         },
-        onSuggestionSelected: (User suggestion) =>
-            UserUtils.goToProfile(suggestion),
-        noItemsFoundBuilder: (context) =>
-            Text(AppLocalizations.of(context)!.no_data),
+
+        // 3. Đổi tên 'onSuggestionSelected' -> 'onSelected'
+        onSelected: (User suggestion) => UserUtils.goToProfile(suggestion),
+
+        // 4. Đổi tên 'noItemsFoundBuilder' -> 'emptyBuilder'
+        emptyBuilder: (context) => Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(AppLocalizations.of(context)!.no_data),
+        ),
       ),
     );
   }

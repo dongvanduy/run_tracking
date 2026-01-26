@@ -26,9 +26,9 @@ class UploadFileWidget extends HookConsumerWidget {
   /// The [image] is the image to display.
   UploadFileWidget(
       {super.key,
-      required this.image,
-      required this.callbackFunc,
-      required this.isUploading});
+        required this.image,
+        required this.callbackFunc,
+        required this.isUploading});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,12 +42,12 @@ class UploadFileWidget extends HookConsumerWidget {
           color: ColorUtils.greyLight,
           child: isUploading
               ? Center(
-                  child: UIUtils.loader,
-                )
+            child: UIUtils.loader,
+          )
               : image != null
-                  ? Image.memory(image!, fit: BoxFit.cover)
-                  : Text(AppLocalizations.of(context)!
-                      .profile_picture_select_please),
+              ? Image.memory(image!, fit: BoxFit.cover)
+              : Text(AppLocalizations.of(context)!
+              .profile_picture_select_please),
         ),
       ),
       ElevatedButton(
@@ -59,27 +59,34 @@ class UploadFileWidget extends HookConsumerWidget {
         ),
         onPressed: () async {
           final XFile? pickedImage =
-              await _picker.pickImage(source: ImageSource.gallery);
+          await _picker.pickImage(source: ImageSource.gallery);
 
           if (pickedImage != null) {
+            // Định nghĩa danh sách tỷ lệ khung hình chung để dùng lại
+            const presets = [
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio3x2,
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio16x9
+            ];
+
             CroppedFile? croppedFile = await ImageCropper().cropImage(
               sourcePath: pickedImage.path,
-              aspectRatioPresets: [
-                CropAspectRatioPreset.square,
-                CropAspectRatioPreset.ratio3x2,
-                CropAspectRatioPreset.original,
-                CropAspectRatioPreset.ratio4x3,
-                CropAspectRatioPreset.ratio16x9
-              ],
+              // XÓA: aspectRatioPresets ở đây (đã bị loại bỏ)
               uiSettings: [
                 AndroidUiSettings(
                     toolbarTitle: 'Cropper',
                     toolbarColor: ColorUtils.main,
                     toolbarWidgetColor: Colors.white,
                     initAspectRatio: CropAspectRatioPreset.square,
-                    lockAspectRatio: false),
+                    lockAspectRatio: false,
+                    // THÊM: aspectRatioPresets vào đây
+                    aspectRatioPresets: presets),
                 IOSUiSettings(
                   title: 'Cropper',
+                  // THÊM: aspectRatioPresets vào đây
+                  aspectRatioPresets: presets,
                 ),
               ],
             );
