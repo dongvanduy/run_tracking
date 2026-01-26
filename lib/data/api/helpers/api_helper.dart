@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/error.dart';
 import '../../../core/utils/storage_utils.dart';
-import '../../../main.dart';
 import '../user_api.dart';
 
 /// Helper class for making API requests.
@@ -169,7 +168,7 @@ class RemoteApi {
 
   /// Handles an unauthorized error by refreshing the JWT and making the request again.
   ///
-  /// Returns the [Response] object or null if navigation to the login screen occurs.
+  /// Returns the [Response] object or null if the refresh fails.
   Future<Response?> handleUnauthorizedError(DioError error,
       Map<String, dynamic>? data, Map<String, dynamic>? queryParams) async {
     try {
@@ -189,10 +188,12 @@ class RemoteApi {
           ),
         );
       } on DioError catch (_) {
-        navigatorKey.currentState?.pushReplacementNamed('/login');
+        await StorageUtils.removeJwt();
+        await StorageUtils.removeRefreshToken();
       }
     } on DioError {
-      navigatorKey.currentState?.pushReplacementNamed('/login');
+      await StorageUtils.removeJwt();
+      await StorageUtils.removeRefreshToken();
     }
     return null;
   }
