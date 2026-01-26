@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/debouncer.dart';
 import '../../../../domain/entities/page.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../utils/color_utils.dart';
 import '../utils/ui_utils.dart';
 import 'view_model/infinite_scroll_list_view_model.dart';

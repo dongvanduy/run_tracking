@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:comment_box/comment/comment.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:quickalert/quickalert.dart';
 
@@ -10,6 +9,7 @@ import '../../../../core/utils/storage_utils.dart';
 import '../../../../domain/entities/activity.dart';
 import '../../../../domain/entities/activity_comment.dart';
 import '../../../../domain/entities/user.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../core/utils/color_utils.dart';
 import '../../core/utils/ui_utils.dart';
 import '../../core/utils/user_utils.dart';

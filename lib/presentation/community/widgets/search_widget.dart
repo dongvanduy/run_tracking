@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../domain/entities/user.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../common/core/utils/color_utils.dart';
 import '../../common/core/utils/user_utils.dart';
 

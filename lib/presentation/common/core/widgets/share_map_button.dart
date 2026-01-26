@@ -1,10 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../domain/entities/activity.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../main.dart';
 import '../../timer/viewmodel/timer_view_model.dart';
 import '../utils/activity_utils.dart';

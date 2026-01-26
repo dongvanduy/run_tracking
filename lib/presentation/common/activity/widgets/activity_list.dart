@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../domain/entities/activity.dart';
 import '../../../../domain/entities/page.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../core/utils/color_utils.dart';
 import '../../core/utils/type_utils.dart';
 import '../../core/widgets/infinite_scroll_list.dart';

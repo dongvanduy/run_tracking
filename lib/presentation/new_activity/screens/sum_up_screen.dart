@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../domain/entities/enum/activity_type.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../common/core/utils/activity_utils.dart';
 import '../../common/core/utils/color_utils.dart';
 import '../../common/core/utils/ui_utils.dart';

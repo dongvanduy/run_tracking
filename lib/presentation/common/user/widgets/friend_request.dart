@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../domain/entities/enum/friend_request_status.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../core/utils/color_utils.dart';
 import '../view_model/profile_view_model.dart';
 

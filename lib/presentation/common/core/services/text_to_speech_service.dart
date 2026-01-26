@@ -1,9 +1,9 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../../../../main.dart';
 
 /// A provider for the text-to-speech service.

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/utils/storage_utils.dart';
 import '../../../../domain/entities/activity.dart';
 import '../../../../domain/entities/enum/activity_type.dart';
 import '../../../../domain/entities/user.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../my_activities/view_model/activity_details_view_model.dart';
 import '../../../new_activity/view_model/sum_up_view_model.dart';
 import '../enums/infinite_scroll_list.enum.dart';
