@@ -28,72 +28,90 @@ class ActivityRepositoryImpl extends ActivityRepository {
   final IsarService _isarService;
 
   Future<List<ActivityResponse>> _loadActivities(
-    QueryBuilder<ActivityResponse, ActivityResponse, QAfterSortBy> query,
+    List<ActivityResponse> activities,
     int pageNumber,
     int pageSize,
   ) async {
-    final activities = await query
-        .offset(pageNumber * pageSize)
-        .limit(pageSize)
-        .findAll();
-    for (final activity in activities) {
+    final sorted = List<ActivityResponse>.from(activities)
+      ..sort((a, b) => b.startDatetime.compareTo(a.startDatetime));
+    final paged = sorted
+        .skip(pageNumber * pageSize)
+        .take(pageSize)
+        .toList();
+    for (final activity in paged) {
       await activity.user.load();
       await activity.locations.load();
     }
-    return activities;
+    return paged;
+  }
+
+  Future<List<ActivityResponse>> _fetchAllActivities(Isar isar) async {
+    return isar.collection<ActivityResponse>().where().findAll();
+  }
+
+  Future<ActivityResponse?> _findActivityById(
+    Isar isar,
+    String id,
+  ) async {
+    final activities = await _fetchAllActivities(isar);
+    for (final activity in activities) {
+      if (activity.id == id) {
+        return activity;
+      }
+    }
+    return null;
   }
 
   @override
   Future<EntityPage<Activity>> getActivities({int pageNumber = 0}) async {
     final isar = await _isarService.getInstance();
-    final total = await isar.collection<ActivityResponse>().count();
+    final allActivities = await _fetchAllActivities(isar);
+    final total = allActivities.length;
     final responses = await _loadActivities(
-      isar.collection<ActivityResponse>().where().sortByStartDatetimeDesc(),
+      allActivities,
       pageNumber,
       _activitiesPageSize,
     );
-    final activities = responses.map((response) => response.toEntity()).toList();
-    return EntityPage(list: activities, total: total);
+    final items = responses.map((response) => response.toEntity()).toList();
+    return EntityPage(list: items, total: total);
   }
 
   @override
   Future<EntityPage<Activity>> getMyAndMyFriendsActivities(
       {int pageNumber = 0}) async {
     final isar = await _isarService.getInstance();
-    final total = await isar.collection<ActivityResponse>().count();
+    final allActivities = await _fetchAllActivities(isar);
+    final total = allActivities.length;
     final responses = await _loadActivities(
-      isar.collection<ActivityResponse>().where().sortByStartDatetimeDesc(),
+      allActivities,
       pageNumber,
       _communityPageSize,
     );
-    final activities = responses.map((response) => response.toEntity()).toList();
-    return EntityPage(list: activities, total: total);
+    final items = responses.map((response) => response.toEntity()).toList();
+    return EntityPage(list: items, total: total);
   }
 
   @override
   Future<EntityPage<Activity>> getUserActivities(String userId,
       {int pageNumber = 0}) async {
     final isar = await _isarService.getInstance();
-    final total = await isar.collection<ActivityResponse>()
-        .filter()
-        .userIdEqualTo(userId)
-        .count();
+    final allActivities = await _fetchAllActivities(isar);
+    final filtered =
+        allActivities.where((activity) => activity.userId == userId).toList();
+    final total = filtered.length;
     final responses = await _loadActivities(
-      isar.collection<ActivityResponse>()
-          .filter()
-          .userIdEqualTo(userId)
-          .sortByStartDatetimeDesc(),
+      filtered,
       pageNumber,
       _activitiesPageSize,
     );
-    final activities = responses.map((response) => response.toEntity()).toList();
-    return EntityPage(list: activities, total: total);
+    final items = responses.map((response) => response.toEntity()).toList();
+    return EntityPage(list: items, total: total);
   }
 
   @override
   Future<Activity> getActivityById({required String id}) async {
     final isar = await _isarService.getInstance();
-    final activity = await isar.collection<ActivityResponse>().filter().idEqualTo(id).findFirst();
+    final activity = await _findActivityById(isar, id);
     if (activity == null) {
       throw Exception('Activity not found.');
     }
@@ -105,7 +123,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
   @override
   Future<String?> removeActivity({required String id}) async {
     final isar = await _isarService.getInstance();
-    final activity = await isar.collection<ActivityResponse>().filter().idEqualTo(id).findFirst();
+    final activity = await _findActivityById(isar, id);
     if (activity == null) {
       return null;
     }
@@ -185,8 +203,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
     if (request.id == null) {
       throw Exception('Activity id is required.');
     }
-    final activity =
-        await isar.collection<ActivityResponse>().filter().idEqualTo(request.id!).findFirst();
+    final activity = await _findActivityById(isar, request.id!);
     if (activity == null) {
       throw Exception('Activity not found.');
     }
@@ -235,7 +252,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
   @override
   Future<void> like(String id) async {
     final isar = await _isarService.getInstance();
-    final activity = await isar.collection<ActivityResponse>().filter().idEqualTo(id).findFirst();
+    final activity = await _findActivityById(isar, id);
     if (activity == null) {
       return;
     }
@@ -249,7 +266,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
   @override
   Future<void> dislike(String id) async {
     final isar = await _isarService.getInstance();
-    final activity = await isar.collection<ActivityResponse>().filter().idEqualTo(id).findFirst();
+    final activity = await _findActivityById(isar, id);
     if (activity == null) {
       return;
     }
@@ -264,10 +281,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
   Future<ActivityComment?> createComment(
       String activityId, String comment) async {
     final isar = await _isarService.getInstance();
-    final activity = await isar.collection<ActivityResponse>()
-        .filter()
-        .idEqualTo(activityId)
-        .findFirst();
+    final activity = await _findActivityById(isar, activityId);
     if (activity == null) {
       throw Exception('Activity not found.');
     }
