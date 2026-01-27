@@ -46,9 +46,9 @@ class ActivityRepositoryImpl extends ActivityRepository {
   @override
   Future<EntityPage<Activity>> getActivities({int pageNumber = 0}) async {
     final isar = await _isarService.getInstance();
-    final total = await isar.activityResponses.count();
+    final total = await isar.collection<ActivityResponse>().count();
     final responses = await _loadActivities(
-      isar.activityResponses.where().sortByStartDatetimeDesc(),
+      isar.collection<ActivityResponse>().where().sortByStartDatetimeDesc(),
       pageNumber,
       _activitiesPageSize,
     );
@@ -60,9 +60,9 @@ class ActivityRepositoryImpl extends ActivityRepository {
   Future<EntityPage<Activity>> getMyAndMyFriendsActivities(
       {int pageNumber = 0}) async {
     final isar = await _isarService.getInstance();
-    final total = await isar.activityResponses.count();
+    final total = await isar.collection<ActivityResponse>().count();
     final responses = await _loadActivities(
-      isar.activityResponses.where().sortByStartDatetimeDesc(),
+      isar.collection<ActivityResponse>().where().sortByStartDatetimeDesc(),
       pageNumber,
       _communityPageSize,
     );
@@ -74,12 +74,12 @@ class ActivityRepositoryImpl extends ActivityRepository {
   Future<EntityPage<Activity>> getUserActivities(String userId,
       {int pageNumber = 0}) async {
     final isar = await _isarService.getInstance();
-    final total = await isar.activityResponses
+    final total = await isar.collection<ActivityResponse>()
         .filter()
         .userIdEqualTo(userId)
         .count();
     final responses = await _loadActivities(
-      isar.activityResponses
+      isar.collection<ActivityResponse>()
           .filter()
           .userIdEqualTo(userId)
           .sortByStartDatetimeDesc(),
@@ -93,7 +93,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
   @override
   Future<Activity> getActivityById({required String id}) async {
     final isar = await _isarService.getInstance();
-    final activity = await isar.activityResponses.filter().idEqualTo(id).findFirst();
+    final activity = await isar.collection<ActivityResponse>().filter().idEqualTo(id).findFirst();
     if (activity == null) {
       throw Exception('Activity not found.');
     }
@@ -105,16 +105,16 @@ class ActivityRepositoryImpl extends ActivityRepository {
   @override
   Future<String?> removeActivity({required String id}) async {
     final isar = await _isarService.getInstance();
-    final activity = await isar.activityResponses.filter().idEqualTo(id).findFirst();
+    final activity = await isar.collection<ActivityResponse>().filter().idEqualTo(id).findFirst();
     if (activity == null) {
       return null;
     }
 
     await activity.locations.load();
     await isar.writeTxn(() async {
-      await isar.activityResponses.delete(activity.isarId);
+      await isar.collection<ActivityResponse>().delete(activity.isarId);
       for (final location in activity.locations) {
-        await isar.locationResponses.delete(location.isarId);
+        await isar.collection<LocationResponse>().delete(location.isarId);
       }
     });
     return id;
@@ -167,11 +167,11 @@ class ActivityRepositoryImpl extends ActivityRepository {
     }).toList();
 
     await isar.writeTxn(() async {
-      await isar.userResponses.put(userResponse);
+      await isar.collection<UserResponse>().put(userResponse);
       activity.user.value = userResponse;
-      await isar.locationResponses.putAll(locations);
+      await isar.collection<LocationResponse>().putAll(locations);
       activity.locations.addAll(locations);
-      await isar.activityResponses.put(activity);
+      await isar.collection<ActivityResponse>().put(activity);
       await activity.user.save();
       await activity.locations.save();
     });
@@ -186,7 +186,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
       throw Exception('Activity id is required.');
     }
     final activity =
-        await isar.activityResponses.filter().idEqualTo(request.id!).findFirst();
+        await isar.collection<ActivityResponse>().filter().idEqualTo(request.id!).findFirst();
     if (activity == null) {
       throw Exception('Activity not found.');
     }
@@ -194,7 +194,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
     await activity.locations.load();
     await isar.writeTxn(() async {
       for (final location in activity.locations) {
-        await isar.locationResponses.delete(location.isarId);
+        await isar.collection<LocationResponse>().delete(location.isarId);
       }
       activity.locations.clear();
 
@@ -207,7 +207,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
         );
       }).toList();
 
-      await isar.locationResponses.putAll(locations);
+      await isar.collection<LocationResponse>().putAll(locations);
       activity.locations.addAll(locations);
 
       activity.type = request.type;
@@ -223,7 +223,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
           : 0.0;
       activity.time = durationMs.toDouble();
 
-      await isar.activityResponses.put(activity);
+      await isar.collection<ActivityResponse>().put(activity);
       await activity.locations.save();
     });
 
@@ -235,28 +235,28 @@ class ActivityRepositoryImpl extends ActivityRepository {
   @override
   Future<void> like(String id) async {
     final isar = await _isarService.getInstance();
-    final activity = await isar.activityResponses.filter().idEqualTo(id).findFirst();
+    final activity = await isar.collection<ActivityResponse>().filter().idEqualTo(id).findFirst();
     if (activity == null) {
       return;
     }
     activity.likesCount += 1;
     activity.hasCurrentUserLiked = true;
     await isar.writeTxn(() async {
-      await isar.activityResponses.put(activity);
+      await isar.collection<ActivityResponse>().put(activity);
     });
   }
 
   @override
   Future<void> dislike(String id) async {
     final isar = await _isarService.getInstance();
-    final activity = await isar.activityResponses.filter().idEqualTo(id).findFirst();
+    final activity = await isar.collection<ActivityResponse>().filter().idEqualTo(id).findFirst();
     if (activity == null) {
       return;
     }
     activity.likesCount = (activity.likesCount - 1).clamp(0, double.infinity);
     activity.hasCurrentUserLiked = false;
     await isar.writeTxn(() async {
-      await isar.activityResponses.put(activity);
+      await isar.collection<ActivityResponse>().put(activity);
     });
   }
 
@@ -264,7 +264,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
   Future<ActivityComment?> createComment(
       String activityId, String comment) async {
     final isar = await _isarService.getInstance();
-    final activity = await isar.activityResponses
+    final activity = await isar.collection<ActivityResponse>()
         .filter()
         .idEqualTo(activityId)
         .findFirst();
@@ -289,7 +289,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
 
     activity.comments.add(response);
     await isar.writeTxn(() async {
-      await isar.activityResponses.put(activity);
+      await isar.collection<ActivityResponse>().put(activity);
     });
 
     return response.toEntity();
@@ -298,7 +298,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
   @override
   Future<ActivityComment> editComment(String id, String comment) async {
     final isar = await _isarService.getInstance();
-    final activities = await isar.activityResponses.where().findAll();
+    final activities = await isar.collection<ActivityResponse>().where().findAll();
     ActivityCommentResponse? updated;
 
     await isar.writeTxn(() async {
@@ -310,7 +310,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
           existing.content = comment;
           activity.comments[index] = existing;
           updated = existing;
-          await isar.activityResponses.put(activity);
+          await isar.collection<ActivityResponse>().put(activity);
           break;
         }
       }
@@ -326,7 +326,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
   @override
   Future<String?> removeComment({required String id}) async {
     final isar = await _isarService.getInstance();
-    final activities = await isar.activityResponses.where().findAll();
+    final activities = await isar.collection<ActivityResponse>().where().findAll();
     bool removed = false;
 
     await isar.writeTxn(() async {
@@ -335,7 +335,7 @@ class ActivityRepositoryImpl extends ActivityRepository {
         activity.comments.removeWhere((comment) => comment.id == id);
         if (activity.comments.length < initialLength) {
           removed = true;
-          await isar.activityResponses.put(activity);
+          await isar.collection<ActivityResponse>().put(activity);
           break;
         }
       }
