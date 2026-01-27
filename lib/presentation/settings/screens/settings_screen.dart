@@ -12,27 +12,37 @@ import 'edit_profile_screen.dart';
 class SettingsScreen extends HookConsumerWidget {
   const SettingsScreen({super.key});
 
-  ElevatedButton createButton(
-      String title, IconData icon, ButtonStyle style, Function() onPressedFct) {
+  ElevatedButton createButton(String title, IconData icon, ButtonStyle style,
+      VoidCallback? onPressedFct,
+      {bool isLoading = false}) {
     return ElevatedButton(
       style: style,
-      onPressed: onPressedFct,
+      onPressed: isLoading ? null : onPressedFct,
       child: Align(
         alignment: Alignment.center,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: ColorUtils.white,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: FormUtils.darkTextFormFieldStyle,
-            ),
-          ],
-        ),
+        child: isLoading
+            ? SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(ColorUtils.white),
+                ),
+              )
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    color: ColorUtils.white,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: FormUtils.darkTextFormFieldStyle,
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -85,6 +95,30 @@ class SettingsScreen extends HookConsumerWidget {
                         FormUtils.buttonStyle,
                         () => navigateToScreen(context, EditPasswordScreen())),
                   ),
+                  const SizedBox(height: 20),
+                  const Divider(),
+                  const SizedBox(height: 20),
+                  Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: createButton(
+                        'Manual Backup',
+                        Icons.cloud_upload,
+                        FormUtils.buttonStyle,
+                        () => provider.manualBackup(context),
+                        isLoading: state.isBackupLoading,
+                      )),
+                  const SizedBox(height: 20),
+                  Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: createButton(
+                        'Restore from Drive',
+                        Icons.cloud_download,
+                        FormUtils.buttonStyle,
+                        () => provider.restoreBackup(context),
+                        isLoading: state.isRestoreLoading,
+                      )),
                   const SizedBox(height: 20),
                   const Divider(),
                   const SizedBox(height: 20),

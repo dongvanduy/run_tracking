@@ -1,23 +1,30 @@
 import 'package:equatable/equatable.dart';
+import 'package:isar/isar.dart';
 
 import '../../../domain/entities/location.dart';
 
 /// Represents a response object for a location.
+part 'location_response.g.dart';
+
+@collection
 class LocationResponse extends Equatable {
+  /// Isar database identifier.
+  Id isarId = Isar.autoIncrement;
+
   /// The ID of the location.
-  final String id;
+  late String id;
 
   /// The datetime of the location.
-  final DateTime datetime;
+  late DateTime datetime;
 
   /// The latitude of the location.
-  final double latitude;
+  late double latitude;
 
   /// The longitude of the location.
-  final double longitude;
+  late double longitude;
 
   /// Constructs a LocationResponse object with the given parameters.
-  const LocationResponse({
+  LocationResponse({
     required this.id,
     required this.datetime,
     required this.latitude,
@@ -50,5 +57,14 @@ class LocationResponse extends Equatable {
       latitude: latitude,
       longitude: longitude,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'datetime': datetime.toIso8601String(),
+      'latitude': latitude,
+      'longitude': longitude,
+    };
   }
 }

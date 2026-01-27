@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:isar/isar.dart';
 
 import '../../../domain/entities/activity.dart';
 import '../../../domain/entities/activity_comment.dart';
@@ -10,57 +11,67 @@ import 'location_response.dart';
 import 'user_response.dart';
 
 /// Represents a response object for an activity.
+part 'activity_response.g.dart';
+
+@collection
 class ActivityResponse extends Equatable {
+  /// Isar database identifier.
+  Id isarId = Isar.autoIncrement;
+
   /// The ID of the activity.
-  final String id;
+  late String id;
+
+  /// The user id for queries.
+  late String userId;
 
   /// The type of the activity.
-  final ActivityType type;
+  @enumerated
+  late ActivityType type;
 
   /// The start datetime of the activity.
-  final DateTime startDatetime;
+  late DateTime startDatetime;
 
   /// The end datetime of the activity.
-  final DateTime endDatetime;
+  late DateTime endDatetime;
 
   /// The distance covered in the activity.
-  final double distance;
+  late double distance;
 
   /// The average speed in the activity.
-  final double speed;
+  late double speed;
 
   /// The total time of the activity.
-  final double time;
+  late double time;
 
   /// The list of locations associated with the activity.
-  final Iterable<LocationResponse> locations;
+  final IsarLinks<LocationResponse> locations = IsarLinks<LocationResponse>();
 
   /// The user concerned by the activity
-  final UserResponse user;
+  final IsarLink<UserResponse> user = IsarLink<UserResponse>();
 
   /// The count of likes on the activity
-  final double likesCount;
+  late double likesCount;
 
   /// has current user liked ?
-  final bool hasCurrentUserLiked;
+  late bool hasCurrentUserLiked;
 
   /// The list of comments
-  final Iterable<ActivityCommentResponse> comments;
+  late List<ActivityCommentResponse> comments;
 
   /// Constructs an ActivityResponse object with the given parameters.
-  const ActivityResponse(
-      {required this.id,
-      required this.type,
-      required this.startDatetime,
-      required this.endDatetime,
-      required this.distance,
-      required this.speed,
-      required this.time,
-      required this.locations,
-      required this.user,
-      required this.likesCount,
-      required this.hasCurrentUserLiked,
-      required this.comments});
+  ActivityResponse({
+    required this.id,
+    required this.userId,
+    required this.type,
+    required this.startDatetime,
+    required this.endDatetime,
+    required this.distance,
+    required this.speed,
+    required this.time,
+    required this.likesCount,
+    required this.hasCurrentUserLiked,
+    List<ActivityCommentResponse>? comments,
+  }) : comments = comments ?? [];
 
   @override
   List<Object?> get props => [
@@ -72,7 +83,7 @@ class ActivityResponse extends Equatable {
         speed,
         time,
         ...locations,
-        user,
+        user.value,
         likesCount,
         hasCurrentUserLiked,
         ...comments
@@ -86,8 +97,14 @@ class ActivityResponse extends Equatable {
       orElse: () => ActivityType.running,
     );
 
-    return ActivityResponse(
+    final user = UserResponse.fromMap(map['user']);
+    final locations = (map['locations'] as List<dynamic>)
+        .map<LocationResponse>((item) => LocationResponse.fromMap(item))
+        .toList();
+    final commentsList = (map['comments'] as List<dynamic>? ?? const []);
+    final activity = ActivityResponse(
       id: map['id'].toString(),
+      userId: user.id,
       type: activityType,
       startDatetime: DateTime.parse(map['startDatetime']),
       endDatetime: DateTime.parse(map['endDatetime']),
@@ -98,17 +115,14 @@ class ActivityResponse extends Equatable {
       time: map['time'].toDouble(),
       likesCount: map['likesCount'].toDouble(),
       hasCurrentUserLiked: map['hasCurrentUserLiked'],
-      locations: (map['locations'] as List<dynamic>)
-          .map<LocationResponse>((item) => LocationResponse.fromMap(item))
-          .toList(),
-      user: UserResponse.fromMap(
-        map['user'],
-      ),
-      comments: (map['comments'] as List<dynamic>)
+      comments: commentsList
           .map<ActivityCommentResponse>(
               (item) => ActivityCommentResponse.fromMap(item))
           .toList(),
     );
+    activity.user.value = user;
+    activity.locations.addAll(locations);
+    return activity;
   }
 
   /// Converts the ActivityResponse object to an Activity entity.
@@ -123,15 +137,9 @@ class ActivityResponse extends Equatable {
     }).toList()
       ..sort((a, b) => a.datetime.compareTo(b.datetime));
 
-    final activityComments = comments.map<ActivityComment>((comment) {
-      return ActivityComment(
-        id: comment.id,
-        createdAt: comment.createdAt,
-        user: comment.user.toEntity(),
-        content: comment.content,
-      );
-    }).toList()
-      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    final activityComments =
+        comments.map<ActivityComment>((comment) => comment.toEntity()).toList()
+          ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
     return Activity(
         id: id,
@@ -145,10 +153,28 @@ class ActivityResponse extends Equatable {
         likesCount: likesCount,
         hasCurrentUserLiked: hasCurrentUserLiked,
         user: User(
-            id: user.id,
-            username: user.username,
-            firstname: user.firstname,
-            lastname: user.lastname),
+            id: user.value?.id ?? userId,
+            username: user.value?.username ?? '',
+            firstname: user.value?.firstname,
+            lastname: user.value?.lastname),
         comments: activityComments);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'type': type.name,
+      'startDatetime': startDatetime.toIso8601String(),
+      'endDatetime': endDatetime.toIso8601String(),
+      'distance': distance,
+      'speed': speed,
+      'time': time,
+      'likesCount': likesCount,
+      'hasCurrentUserLiked': hasCurrentUserLiked,
+      'user': user.value?.toJson(),
+      'locations': locations.map((location) => location.toJson()).toList(),
+      'comments': comments.map((comment) => comment.toJson()).toList(),
+    };
   }
 }
