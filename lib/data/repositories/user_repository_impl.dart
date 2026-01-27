@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../core/utils/storage_utils.dart';
@@ -32,13 +33,33 @@ class UserRepositoryImpl extends UserRepository {
   final IsarService _isarService;
   final LocalAuthStorage _authStorage;
 
+  Future<List<UserResponse>> _fetchAllUsers(Isar isar) async {
+    return isar.collection<UserResponse>().where().findAll();
+  }
+
+  UserResponse? _findUserById(List<UserResponse> users, String id) {
+    for (final user in users) {
+      if (user.id == id) {
+        return user;
+      }
+    }
+    return null;
+  }
+
+  UserResponse? _findUserByUsername(List<UserResponse> users, String username) {
+    for (final user in users) {
+      if (user.username == username) {
+        return user;
+      }
+    }
+    return null;
+  }
+
   @override
   Future<int> register(RegistrationRequest request) async {
     final isar = await _isarService.getInstance();
-    final existing = await isar.collection<UserResponse>()
-        .filter()
-        .usernameEqualTo(request.username)
-        .findFirst();
+    final users = await _fetchAllUsers(isar);
+    final existing = _findUserByUsername(users, request.username);
     if (existing != null) {
       throw Exception('Username already exists.');
     }
@@ -61,10 +82,8 @@ class UserRepositoryImpl extends UserRepository {
   @override
   Future<LoginResponse> login(LoginRequest request) async {
     final isar = await _isarService.getInstance();
-    final user = await isar.collection<UserResponse>()
-        .filter()
-        .usernameEqualTo(request.username)
-        .findFirst();
+    final users = await _fetchAllUsers(isar);
+    final user = _findUserByUsername(users, request.username);
     if (user == null) {
       throw Exception('No local profile found for this username.');
     }
@@ -100,10 +119,8 @@ class UserRepositoryImpl extends UserRepository {
     if (user == null) {
       return;
     }
-    final response = await isar.collection<UserResponse>()
-        .filter()
-        .idEqualTo(user.id)
-        .findFirst();
+    final users = await _fetchAllUsers(isar);
+    final response = _findUserById(users, user.id);
     if (response != null) {
       await isar.writeTxn(() async {
         await isar.collection<UserResponse>().delete(response.isarId);
@@ -135,10 +152,8 @@ class UserRepositoryImpl extends UserRepository {
     if (currentUser == null) {
       throw Exception('No logged-in user found.');
     }
-    final response = await isar.collection<UserResponse>()
-        .filter()
-        .idEqualTo(currentUser.id)
-        .findFirst();
+    final users = await _fetchAllUsers(isar);
+    final response = _findUserById(users, currentUser.id);
     if (response == null) {
       throw Exception('Unable to locate local profile.');
     }
@@ -153,11 +168,14 @@ class UserRepositoryImpl extends UserRepository {
   @override
   Future<List<User>> search(String text) async {
     final isar = await _isarService.getInstance();
-    final responses = await isar.collection<UserResponse>()
-        .filter()
-        .usernameContains(text, caseSensitive: false)
-        .findAll();
-    return responses.map((response) => response.toEntity()).toList();
+    final responses = await _fetchAllUsers(isar);
+    final normalized = text.toLowerCase();
+    return responses
+        .where(
+          (response) => response.username.toLowerCase().contains(normalized),
+        )
+        .map((response) => response.toEntity())
+        .toList();
   }
 
   @override
