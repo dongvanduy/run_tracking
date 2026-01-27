@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/utils/storage_utils.dart';
 import '../../../data/repositories/user_repository_impl.dart';
+import '../../../data/services/google_drive_service.dart';
 import '../../../domain/entities/user.dart';
 import '../../../main.dart';
 import '../../common/core/enums/infinite_scroll_list.enum.dart';
@@ -100,6 +101,65 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
                   '${InfiniteScrollListEnum.profile}_${currentUser.id}')
               .notifier)
           .reset();
+    }
+  }
+
+  /// Triggers a manual backup to Google Drive.
+  Future<void> manualBackup(BuildContext context) async {
+    try {
+      state = state.copyWith(isBackupLoading: true);
+      await ref.read(googleDriveServiceProvider).backupDatabase();
+      if (context.mounted) {
+        QuickAlert.show(
+          context: context,
+          type: QuickAlertType.success,
+          title: 'Backup complete',
+          text: 'Your data has been backed up to Google Drive.',
+          confirmBtnColor: ColorUtils.main,
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        QuickAlert.show(
+          context: context,
+          type: QuickAlertType.error,
+          title: 'Backup failed',
+          text: error.toString(),
+          confirmBtnColor: ColorUtils.red,
+        );
+      }
+    } finally {
+      state = state.copyWith(isBackupLoading: false);
+    }
+  }
+
+  /// Restores data from Google Drive.
+  Future<void> restoreBackup(BuildContext context) async {
+    try {
+      state = state.copyWith(isRestoreLoading: true);
+      await ref.read(googleDriveServiceProvider).restoreDatabase();
+      await resetInfiniteLists();
+      if (context.mounted) {
+        QuickAlert.show(
+          context: context,
+          type: QuickAlertType.success,
+          title: 'Restore complete',
+          text: 'Your data has been restored from Google Drive.',
+          confirmBtnColor: ColorUtils.main,
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        QuickAlert.show(
+          context: context,
+          type: QuickAlertType.error,
+          title: 'Restore failed',
+          text: error.toString(),
+          confirmBtnColor: ColorUtils.red,
+        );
+      }
+    } finally {
+      state = state.copyWith(isRestoreLoading: false);
     }
   }
 }

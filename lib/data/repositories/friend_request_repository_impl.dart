@@ -5,7 +5,6 @@ import '../../domain/entities/friend_request.dart';
 import '../../domain/entities/page.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/friend_request_repository.dart';
-import '../api/friend_request_api.dart';
 
 /// Provider for the FriendRequestRepository implementation.
 final friendRequestRepositoryProvider =
@@ -17,40 +16,31 @@ class FriendRequestRepositoryImpl extends FriendRequestRepository {
 
   @override
   Future<EntityPage<User>> getPendingRequestUsers({int pageNumber = 0}) async {
-    final pendingUsersResponses =
-        await FriendRequestApi.getPendindRequestUsers(pageNumber);
-
-    List<User> users = pendingUsersResponses.list
-        .map((response) => response.toEntity())
-        .toList();
-    return EntityPage(list: users, total: pendingUsersResponses.total);
+    return const EntityPage(list: [], total: 0);
   }
 
   @override
   Future<FriendRequestStatus?> getStatus(String userId) async {
-    return await FriendRequestApi.getStatus(userId);
+    return FriendRequestStatus.noDisplay;
   }
 
   @override
   Future<int> sendRequest(String userId) async {
-    return await FriendRequestApi.sendRequest(userId);
+    return 0;
   }
 
   @override
   Future<FriendRequest> accept(String userId) async {
-    final response = await FriendRequestApi.accept(userId);
-    return response.toEntity();
+    return const FriendRequest(status: FriendRequestStatus.accepted);
   }
 
   @override
   Future<FriendRequest> reject(String userId) async {
-    final response = await FriendRequestApi.reject(userId);
-    return response.toEntity();
+    return const FriendRequest(status: FriendRequestStatus.rejected);
   }
 
   @override
   Future<FriendRequest> cancel(String userId) async {
-    final response = await FriendRequestApi.cancel(userId);
-    return response.toEntity();
+    return const FriendRequest(status: FriendRequestStatus.canceled);
   }
 }

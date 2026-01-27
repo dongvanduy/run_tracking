@@ -55,6 +55,24 @@ class StorageUtils {
     return prefs.setString('jwt', jwt);
   }
 
+  /// Retrieves the logged-in state stored in shared preferences.
+  static Future<bool> getLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('loggedIn') ?? false;
+  }
+
+  /// Stores the logged-in state in shared preferences.
+  static Future<bool> setLoggedIn(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.setBool('loggedIn', value);
+  }
+
+  /// Removes the logged-in state from shared preferences.
+  static Future<bool> removeLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.remove('loggedIn');
+  }
+
   /// Retrieves the user stored in shared preferences.
   ///
   /// Returns [null] if no data is stored.
