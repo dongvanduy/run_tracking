@@ -35,7 +35,7 @@ class UserRepositoryImpl extends UserRepository {
   @override
   Future<int> register(RegistrationRequest request) async {
     final isar = await _isarService.getInstance();
-    final existing = await isar.userResponses
+    final existing = await isar.collection<UserResponse>()
         .filter()
         .usernameEqualTo(request.username)
         .findFirst();
@@ -51,7 +51,7 @@ class UserRepositoryImpl extends UserRepository {
     );
 
     await isar.writeTxn(() async {
-      await isar.userResponses.put(user);
+      await isar.collection<UserResponse>().put(user);
     });
 
     await _authStorage.setPassword(user.id, request.password);
@@ -61,7 +61,7 @@ class UserRepositoryImpl extends UserRepository {
   @override
   Future<LoginResponse> login(LoginRequest request) async {
     final isar = await _isarService.getInstance();
-    final user = await isar.userResponses
+    final user = await isar.collection<UserResponse>()
         .filter()
         .usernameEqualTo(request.username)
         .findFirst();
@@ -100,13 +100,13 @@ class UserRepositoryImpl extends UserRepository {
     if (user == null) {
       return;
     }
-    final response = await isar.userResponses
+    final response = await isar.collection<UserResponse>()
         .filter()
         .idEqualTo(user.id)
         .findFirst();
     if (response != null) {
       await isar.writeTxn(() async {
-        await isar.userResponses.delete(response.isarId);
+        await isar.collection<UserResponse>().delete(response.isarId);
       });
     }
     await _authStorage.removePassword(user.id);
@@ -125,7 +125,7 @@ class UserRepositoryImpl extends UserRepository {
     if (user == null) {
       throw Exception('No logged-in user found.');
     }
-    await _authStorage.setPassword(user.id, request.newPassword);
+    await _authStorage.setPassword(user.id, request.password);
   }
 
   @override
@@ -135,7 +135,7 @@ class UserRepositoryImpl extends UserRepository {
     if (currentUser == null) {
       throw Exception('No logged-in user found.');
     }
-    final response = await isar.userResponses
+    final response = await isar.collection<UserResponse>()
         .filter()
         .idEqualTo(currentUser.id)
         .findFirst();
@@ -144,9 +144,8 @@ class UserRepositoryImpl extends UserRepository {
     }
     response.firstname = request.firstname;
     response.lastname = request.lastname;
-    response.username = request.username;
     await isar.writeTxn(() async {
-      await isar.userResponses.put(response);
+      await isar.collection<UserResponse>().put(response);
     });
     await StorageUtils.setUser(response);
   }
@@ -154,7 +153,7 @@ class UserRepositoryImpl extends UserRepository {
   @override
   Future<List<User>> search(String text) async {
     final isar = await _isarService.getInstance();
-    final responses = await isar.userResponses
+    final responses = await isar.collection<UserResponse>()
         .filter()
         .usernameContains(text, caseSensitive: false)
         .findAll();

@@ -43,13 +43,13 @@ class GoogleDriveService {
 
   Future<Map<String, dynamic>> _buildBackupPayload() async {
     final isar = await _isarService.getInstance();
-    final activities = await isar.activityResponses.where().findAll();
+    final activities = await isar.collection<ActivityResponse>().where().findAll();
     for (final activity in activities) {
       await activity.user.load();
       await activity.locations.load();
     }
-    final users = await isar.userResponses.where().findAll();
-    final locations = await isar.locationResponses.where().findAll();
+    final users = await isar.collection<UserResponse>().where().findAll();
+    final locations = await isar.collection<LocationResponse>().where().findAll();
 
     return {
       'version': 1,
@@ -141,15 +141,15 @@ class GoogleDriveService {
         List<Map<String, dynamic>>.from(payload['activities'] ?? []);
 
     await isar.writeTxn(() async {
-      await isar.activityResponses.clear();
-      await isar.locationResponses.clear();
-      await isar.userResponses.clear();
+      await isar.collection<ActivityResponse>().clear();
+      await isar.collection<LocationResponse>().clear();
+      await isar.collection<UserResponse>().clear();
 
       final users = usersJson.map(UserResponse.fromMap).toList();
-      await isar.userResponses.putAll(users);
+      await isar.collection<UserResponse>().putAll(users);
 
       final locations = locationsJson.map(LocationResponse.fromMap).toList();
-      await isar.locationResponses.putAll(locations);
+      await isar.collection<LocationResponse>().putAll(locations);
 
       final userById = {for (final user in users) user.id: user};
       final locationById = {
@@ -190,7 +190,7 @@ class GoogleDriveService {
               lastname: userJson['lastname']?.toString(),
             );
         userById[activity.userId] = user;
-        await isar.userResponses.put(user);
+        await isar.collection<UserResponse>().put(user);
         activity.user.value = user;
 
         for (final locationMap in
@@ -199,11 +199,11 @@ class GoogleDriveService {
           final location = locationById[locationId] ??
               LocationResponse.fromMap(locationMap);
           locationById[locationId] = location;
-          await isar.locationResponses.put(location);
+          await isar.collection<LocationResponse>().put(location);
           activity.locations.add(location);
         }
 
-        await isar.activityResponses.put(activity);
+        await isar.collection<ActivityResponse>().put(activity);
         await activity.user.save();
         await activity.locations.save();
       }

@@ -4,9 +4,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../model/response/activity_response.dart';
-import '../model/response/location_response.dart';
-import '../model/response/user_response.dart';
 
 final isarServiceProvider = Provider<IsarService>((ref) => IsarService());
 
@@ -24,11 +21,7 @@ class IsarService {
 
     final directory = await getApplicationDocumentsDirectory();
     _isar = await Isar.open(
-      [
-        ActivityResponseSchema,
-        LocationResponseSchema,
-        UserResponseSchema,
-      ],
+      [],
       directory: directory.path,
       name: databaseName,
     );
