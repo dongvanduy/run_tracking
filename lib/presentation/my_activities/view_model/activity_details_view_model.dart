@@ -13,6 +13,7 @@ import '../../common/core/utils/activity_utils.dart';
 import '../../home/screens/home_screen.dart';
 import '../../home/view_model/home_view_model.dart';
 import 'state/activitie_details_state.dart';
+enum Tabs { home, list, community, settings }
 
 /// Provider for the activity details view model.
 final activityDetailsViewModelProvider = StateNotifierProvider.autoDispose<
