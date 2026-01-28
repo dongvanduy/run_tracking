@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../core/utils/color_utils.dart';
-import '../viewmodel/timer_view_model.dart';
+import '../../../../../main.dart';
+import '../viewmodel/tracking_notifier.dart';
 
 /// A widget that displays the timer start button.
 class TimerStart extends HookConsumerWidget {
@@ -10,13 +11,14 @@ class TimerStart extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // ignore: unused_local_variable
-    final state = ref.watch(timerViewModelProvider);
-    final timerViewModel = ref.watch(timerViewModelProvider.notifier);
+    final trackingState = ref.watch(trackingNotifierProvider);
+    final trackingNotifier = ref.watch(trackingNotifierProvider.notifier);
+    final hasTrackingStarted =
+        trackingNotifier.hasTrackingStarted || trackingState.isTracking;
 
     return FloatingActionButton(
       heroTag: 'start_button',
-      backgroundColor: timerViewModel.hasTimerStarted()
+      backgroundColor: hasTrackingStarted
           ? ColorUtils.errorDarker
           : ColorUtils.main,
       elevation: 4.0,
@@ -32,16 +34,17 @@ class TimerStart extends HookConsumerWidget {
           );
         },
         child: Icon(
-          timerViewModel.hasTimerStarted() ? Icons.stop : Icons.play_arrow,
-          key: ValueKey<bool>(timerViewModel.hasTimerStarted()),
+          hasTrackingStarted ? Icons.stop : Icons.play_arrow,
+          key: ValueKey<bool>(hasTrackingStarted),
           color: ColorUtils.white,
         ),
       ),
-      onPressed: () {
-        if (timerViewModel.hasTimerStarted()) {
-          timerViewModel.stopTimer();
+      onPressed: () async {
+        if (hasTrackingStarted) {
+          await trackingNotifier.stopTracking();
+          navigatorKey.currentState?.pushNamed('/sumup');
         } else {
-          timerViewModel.startTimer();
+          await trackingNotifier.startTracking();
         }
       },
     );

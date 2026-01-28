@@ -3,7 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../common/location/widgets/current_location_map.dart';
 import '../../common/metrics/widgets/metrics.dart';
-import '../../common/timer/viewmodel/timer_view_model.dart';
+import '../../common/timer/viewmodel/tracking_notifier.dart';
 import '../../common/timer/widgets/timer_pause.dart';
 import '../../common/timer/widgets/timer_sized.dart';
 import '../../common/timer/widgets/timer_start.dart';
@@ -14,10 +14,10 @@ class NewActivityScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final timerViewModel = ref.watch(timerViewModelProvider.notifier);
-    // ignore: unused_local_variable
-    final isRunning =
-        ref.watch(timerViewModelProvider.select((value) => value.isRunning));
+    final trackingState = ref.watch(trackingNotifierProvider);
+    final trackingNotifier = ref.watch(trackingNotifierProvider.notifier);
+    final hasTrackingStarted =
+        trackingNotifier.hasTrackingStarted || trackingState.isTracking;
 
     return Scaffold(
       body: SafeArea(
@@ -30,7 +30,7 @@ class NewActivityScreen extends HookConsumerWidget {
           ],
         ),
       ),
-      floatingActionButton: timerViewModel.hasTimerStarted()
+      floatingActionButton: hasTrackingStarted
           ? const Stack(
               children: [
                 Positioned(
