@@ -22,8 +22,8 @@ subprojects {
 }
 
 subprojects {
-    afterEvaluate {
-        if (name == "isar_flutter_libs") {
+    if (name == "isar_flutter_libs") {
+        plugins.withId("com.android.library") {
             extensions.findByType(LibraryExtension::class.java)?.apply {
                 if (namespace == null) {
                     namespace = "dev.isar.isar_flutter_libs"
