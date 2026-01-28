@@ -1,6 +1,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../data/model/request/activity_request.dart';
+import '../../../data/model/request/location_request.dart';
 import '../../../data/repositories/activity_repository_impl.dart';
 import '../../../domain/entities/activity.dart';
 import '../../../domain/entities/enum/activity_type.dart';
@@ -8,9 +9,7 @@ import '../../../domain/entities/location.dart';
 import '../../../domain/entities/user.dart';
 import '../../../main.dart';
 import '../../common/core/utils/activity_utils.dart';
-import '../../common/location/view_model/location_view_model.dart';
-import '../../common/metrics/view_model/metrics_view_model.dart';
-import '../../common/timer/viewmodel/timer_view_model.dart';
+import '../../common/timer/viewmodel/tracking_notifier.dart';
 import 'state/sum_up_state.dart';
 
 /// Provides the instance of [SumUpViewModel].
@@ -40,14 +39,14 @@ class SumUpViewModel extends StateNotifier<SumUpState> {
   void save() async {
     state = state.copyWith(isSaving: true);
 
-    final startDatetime = ref.read(timerViewModelProvider).startDatetime;
+    final trackingState = ref.read(trackingNotifierProvider);
+    final trackingNotifier = ref.read(trackingNotifierProvider.notifier);
+    final startDatetime = trackingNotifier.startTime ?? DateTime.now();
     final endDatetime = startDatetime.add(Duration(
-      hours: ref.read(timerViewModelProvider).hours,
-      minutes: ref.read(timerViewModelProvider).minutes,
-      seconds: ref.read(timerViewModelProvider).seconds,
+      seconds: trackingState.durationSeconds,
     ));
 
-    final locations = ref.read(locationViewModelProvider).savedPositions;
+    final locations = trackingState.pathPoints;
 
     ref
         .read(activityRepositoryProvider)
@@ -55,17 +54,22 @@ class SumUpViewModel extends StateNotifier<SumUpState> {
           type: state.type,
           startDatetime: startDatetime,
           endDatetime: endDatetime,
-          distance: ref.read(metricsViewModelProvider).distance,
-          locations: locations,
+          distance: trackingState.distanceMeters / 1000,
+          locations: locations
+              .map(
+                (position) => LocationRequest(
+                  datetime: position.timestamp ?? DateTime.now(),
+                  latitude: position.latitude,
+                  longitude: position.longitude,
+                ),
+              )
+              .toList(),
         ))
         .then((value) async {
       if (value != null) {
         ActivityUtils.updateActivity(ref, value, ActivityUpdateActionEnum.add);
       }
-      ref.read(timerViewModelProvider.notifier).resetTimer();
-      ref.read(locationViewModelProvider.notifier).resetSavedPositions();
-      ref.read(metricsViewModelProvider.notifier).reset();
-      ref.read(locationViewModelProvider.notifier).startGettingLocation();
+      await ref.read(trackingNotifierProvider.notifier).reset();
 
       state = state.copyWith(isSaving: false);
       navigatorKey.currentState?.pop();
@@ -73,33 +77,34 @@ class SumUpViewModel extends StateNotifier<SumUpState> {
   }
 
   Activity getActivity() {
-    final startDatetime = ref.read(timerViewModelProvider).startDatetime;
+    final trackingState = ref.read(trackingNotifierProvider);
+    final trackingNotifier = ref.read(trackingNotifierProvider.notifier);
+    final startDatetime = trackingNotifier.startTime ?? DateTime.now();
     final endDatetime = startDatetime.add(Duration(
-      hours: ref.read(timerViewModelProvider).hours,
-      minutes: ref.read(timerViewModelProvider).minutes,
-      seconds: ref.read(timerViewModelProvider).seconds,
+      seconds: trackingState.durationSeconds,
     ));
-    final locations = ref.read(locationViewModelProvider).savedPositions;
-    final distance = ref.read(metricsViewModelProvider).distance;
-    final speed = ref.read(metricsViewModelProvider).globalSpeed;
-
-    Duration difference = endDatetime.difference(startDatetime);
-    double differenceInMilliseconds = difference.inMilliseconds.toDouble();
+    final locations = trackingState.pathPoints;
+    final distanceKm = trackingState.distanceMeters / 1000;
+    double speed = 0;
+    if (trackingState.durationSeconds > 0) {
+      speed = distanceKm /
+          (trackingState.durationSeconds / Duration.secondsPerHour);
+    }
 
     return Activity(
         id: '',
         type: state.type,
         startDatetime: startDatetime,
         endDatetime: endDatetime,
-        distance: distance,
+        distance: distanceKm,
         speed: speed,
-        time: differenceInMilliseconds,
+        time: trackingState.durationSeconds * 1000,
         likesCount: 0,
         hasCurrentUserLiked: false,
         locations: locations
             .map((l) => Location(
                 id: '',
-                datetime: l.datetime,
+                datetime: l.timestamp ?? DateTime.now(),
                 latitude: l.latitude,
                 longitude: l.longitude))
             .toList(),

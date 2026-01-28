@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../view_model/metrics_view_model.dart';
+import '../../timer/viewmodel/tracking_notifier.dart';
 
 /// A widget that displays the metrics information such as speed and distance.
 class Metrics extends HookConsumerWidget {
@@ -13,11 +13,16 @@ class Metrics extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(metricsViewModelProvider);
+    final trackingState = ref.watch(trackingNotifierProvider);
     const textStyle = TextStyle(fontSize: 26.0, fontWeight: FontWeight.bold);
 
-    double speedToDisplay = state.globalSpeed;
-    double distanceToDisplay = state.distance;
+    double distanceToDisplay = trackingState.distanceMeters / 1000;
+    double speedToDisplay = 0;
+
+    if (trackingState.durationSeconds > 0) {
+      speedToDisplay = distanceToDisplay /
+          (trackingState.durationSeconds / Duration.secondsPerHour);
+    }
 
     if (speed != null) {
       speedToDisplay = speed!;

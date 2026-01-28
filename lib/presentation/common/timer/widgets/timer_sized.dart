@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../viewmodel/timer_view_model.dart';
+import '../viewmodel/tracking_notifier.dart';
 import 'timer_text.dart';
 
 /// A widget that displays the timer text with a fixed size.
@@ -10,10 +10,7 @@ class TimerTextSized extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // ignore: unused_local_variable
-    final state = ref.watch(timerViewModelProvider);
-    // ignore: unused_local_variable
-    final timerViewModel = ref.watch(timerViewModelProvider.notifier);
+    ref.watch(trackingNotifierProvider);
 
     return const Column(
       children: <Widget>[

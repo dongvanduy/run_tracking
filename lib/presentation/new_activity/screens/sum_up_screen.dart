@@ -9,9 +9,9 @@ import '../../common/core/utils/activity_utils.dart';
 import '../../common/core/utils/color_utils.dart';
 import '../../common/core/utils/ui_utils.dart';
 import '../../common/core/widgets/share_map_button.dart';
-import '../../common/location/view_model/location_view_model.dart';
 import '../../common/location/widgets/location_map.dart';
 import '../../common/metrics/widgets/metrics.dart';
+import '../../common/timer/viewmodel/tracking_notifier.dart';
 import '../../common/timer/widgets/timer_sized.dart';
 import '../view_model/sum_up_view_model.dart';
 import '../widgets/save_button.dart';
@@ -23,12 +23,14 @@ class SumUpScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(sumUpViewModelProvider);
     final provider = ref.read(sumUpViewModelProvider.notifier);
+    final trackingState = ref.watch(trackingNotifierProvider);
     ActivityType selectedType = state.type;
 
-    final locations = ref.read(locationViewModelProvider).savedPositions;
+    final locations = trackingState.pathPoints;
 
-    final List<LatLng> points =
-        ref.read(locationViewModelProvider.notifier).savedPositionsLatLng();
+    final List<LatLng> points = locations
+        .map((position) => LatLng(position.latitude, position.longitude))
+        .toList();
 
     final List<Marker> markers = [];
 
