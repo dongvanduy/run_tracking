@@ -1,0 +1,82 @@
+WITH A_AGG AS
+(
+    SELECT
+        a.MODEL_NAME,
+        a.GROUP_NAME,
+        SUM(NVL(a.FIRST_PASS_QTY,  0)) AS FIRST_PASS,
+        SUM(NVL(a.FIRST_FAIL_QTY,  0)) AS FIRST_FAIL,
+        SUM(NVL(a.REPAIR_QTY,      0)) AS REPAIR_QTY,
+        SUM(NVL(a.PASS_QTY,        0)) AS PASS_QTY,
+        SUM(NVL(a.REPASS_QTY,      0)) AS REPASS_QTY,
+        SUM(NVL(a.SECOND_PASS_QTY, 0)) AS SECOND_PASS
+    FROM SFISM4.R_STATION_ATE_T a
+    JOIN SFIS1.C_MODEL_DESC_T   b
+        ON b.MODEL_NAME = a.MODEL_NAME
+    WHERE A.WORK_DATE || TRIM(TO_CHAR(A.WORK_SECTION, '00')) >= :startWorkDate
+      AND A.WORK_DATE || TRIM(TO_CHAR(A.WORK_SECTION, '00')) < :endWorkDate
+      AND UPPER(b.MODEL_SERIAL) = :modelSerial
+    GROUP BY
+        a.MODEL_NAME,
+        a.GROUP_NAME
+),
+WIP AS
+(
+    SELECT
+        t.MODEL_NAME,
+        t.WIP_GROUP AS GROUP_NAME,
+        COUNT(*)    AS WIP_QTY
+    FROM SFISM4.R_WIP_TRACKING_T t
+    JOIN A_AGG x
+        ON x.MODEL_NAME  = t.MODEL_NAME
+       AND x.GROUP_NAME  = t.WIP_GROUP
+    GROUP BY
+        t.MODEL_NAME,
+        t.WIP_GROUP
+)
+SELECT
+    x.MODEL_NAME,
+    x.GROUP_NAME,
+    NVL(w.WIP_QTY, 0)               AS WIP_QTY,
+    (x.FIRST_PASS + x.FIRST_FAIL)   AS INPUT,
+    x.FIRST_FAIL                    AS FIRST_FAIL,
+    x.REPAIR_QTY                    AS REPAIR_QTY,
+    x.FIRST_PASS                    AS FIRST_PASS,
+    x.PASS_QTY                      AS PASS,
+    x.REPASS_QTY                    AS R_PASS,
+
+    ROUND(
+        CASE
+            WHEN (x.FIRST_PASS + x.FIRST_FAIL) = 0 THEN 0
+            ELSE (x.FIRST_PASS * 100.0) / (x.FIRST_PASS + x.FIRST_FAIL)
+        END,
+    2) AS FPR,
+
+    ROUND(
+        CASE
+            WHEN (x.PASS_QTY + x.REPASS_QTY + x.REPAIR_QTY) = 0 THEN 0
+            ELSE ((x.PASS_QTY + x.REPASS_QTY) * 100.0)
+                 / (x.PASS_QTY + x.REPASS_QTY + x.REPAIR_QTY)
+        END,
+    2) AS SPR,
+
+    ROUND(
+        CASE
+            WHEN (x.FIRST_PASS + x.FIRST_FAIL) = 0 THEN 0
+            ELSE ((x.PASS_QTY + x.REPASS_QTY) * 100.0)
+                 / (x.FIRST_PASS + x.FIRST_FAIL)
+        END,
+    2) AS YR,
+
+    ROUND(
+        CASE
+            WHEN (x.FIRST_PASS + x.FIRST_FAIL) = 0 THEN 0
+            ELSE (x.SECOND_PASS * 100.0) / (x.FIRST_PASS + x.FIRST_FAIL)
+        END,
+    2) AS RR
+FROM A_AGG x
+LEFT JOIN WIP w
+    ON w.MODEL_NAME  = x.MODEL_NAME
+   AND w.GROUP_NAME  = x.GROUP_NAME
+ORDER BY
+    x.MODEL_NAME,
+    x.GROUP_NAME DESC
